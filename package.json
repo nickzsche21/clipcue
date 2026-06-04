@@ -1,0 +1,9 @@
+{
+  "name": "clipcue-working-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Working ClipCue MVP: paste a startup URL, generate a storyboard, preview video, and browser-recorded export.",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

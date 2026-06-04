@@ -1,0 +1,1807 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ClipCue Working MVP</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Bodoni+Moda:opsz,wght@6..96,500;6..96,700;6..96,800;6..96,900&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800;9..144,900&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Serif:wght@500;600;700;800&family=Instrument+Serif&family=Inter:wght@400;500;600;700;800;900&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700;6..72,800&family=Playfair+Display:wght@500;600;700;800;900&family=Sora:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@500;600;700;800&display=swap");
+
+      :root {
+        color-scheme: light;
+        --cream: #f7f3ea;
+        --ink: #080807;
+        --muted: rgba(8, 8, 7, 0.62);
+        --line: rgba(8, 8, 7, 0.13);
+        --soft: rgba(8, 8, 7, 0.06);
+        --white: #fffaf0;
+        --red: #b30c17;
+        --blue: #0d6f88;
+        --green: #2f8f68;
+        --gold: #b58b3a;
+        --radius: 16px;
+        --max: 1180px;
+        --sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --serif: "Newsreader", Georgia, serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink);
+        background: var(--cream);
+        font-family: var(--sans);
+        overflow-x: hidden;
+      }
+
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .container {
+        width: min(var(--max), calc(100% - 44px));
+        margin: 0 auto;
+      }
+
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(247, 243, 234, 0.9);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav-inner {
+        min-height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font-family: var(--serif);
+        font-size: 25px;
+        letter-spacing: 0;
+      }
+
+      .brand-mark {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        display: grid;
+        place-items: center;
+        color: white;
+        background: var(--red);
+        box-shadow: 0 8px 18px rgba(216, 31, 42, 0.22);
+        font-family: var(--sans);
+        font-size: 14px;
+        font-weight: 900;
+        transform: rotate(-9deg);
+      }
+
+      .button {
+        min-height: 44px;
+        border: 0;
+        border-radius: 999px;
+        padding: 0 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        color: white;
+        background: var(--ink);
+        font-weight: 800;
+        white-space: nowrap;
+        max-width: 100%;
+      }
+
+      .button.secondary {
+        color: var(--ink);
+        background: var(--white);
+        box-shadow: inset 0 0 0 1px var(--line);
+      }
+
+      .button.blue {
+        background: var(--blue);
+      }
+
+      .button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .arrow {
+        width: 15px;
+        height: 15px;
+        position: relative;
+        display: inline-block;
+      }
+
+      .arrow::before {
+        content: "";
+        position: absolute;
+        right: 1px;
+        top: 3px;
+        width: 8px;
+        height: 8px;
+        border-top: 2px solid currentColor;
+        border-right: 2px solid currentColor;
+        transform: rotate(45deg);
+      }
+
+      .arrow::after {
+        content: "";
+        position: absolute;
+        right: 1px;
+        top: 7px;
+        width: 13px;
+        height: 2px;
+        background: currentColor;
+      }
+
+      .hero {
+        padding: 24px 0 14px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+        gap: 34px;
+        align-items: end;
+        text-align: left;
+      }
+
+      .eyebrow {
+        grid-column: 1 / -1;
+        margin-bottom: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .eyebrow::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--red);
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        grid-column: 1;
+        width: min(680px, 100%);
+        margin: 0;
+        font-family: var(--serif);
+        font-size: 56px;
+        line-height: 0.98;
+        letter-spacing: 0;
+        font-weight: 800;
+      }
+
+      .hero p {
+        grid-column: 2;
+        width: min(520px, 100%);
+        margin: 0 0 6px auto;
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.55;
+      }
+
+      .app {
+        padding: 12px 0 80px;
+      }
+
+      .app-grid {
+        display: grid;
+        grid-template-columns: 360px minmax(0, 1fr);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .app-grid > *,
+      .preview-body > *,
+      .panel,
+      .field,
+      .row > * {
+        min-width: 0;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 250, 240, 0.82);
+        backdrop-filter: blur(18px);
+        box-shadow: 0 28px 80px rgba(8, 8, 7, 0.08);
+      }
+
+      .form-panel {
+        padding: 22px;
+      }
+
+      .form-grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .field label {
+        display: block;
+        margin-bottom: 7px;
+        color: rgba(13, 13, 13, 0.68);
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .field input,
+      .field textarea,
+      .field select {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        outline: 0;
+        color: var(--ink);
+        background: #fbf6eb;
+        padding: 13px 14px;
+      }
+
+      .field textarea {
+        min-height: 104px;
+        resize: vertical;
+      }
+
+      .template-note {
+        margin: 8px 0 0;
+        color: rgba(8, 8, 7, 0.56);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .status {
+        min-height: 42px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        color: rgba(13, 13, 13, 0.68);
+        background: #efe8d8;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .preview-panel {
+        overflow: hidden;
+      }
+
+      .preview-top {
+        min-height: 64px;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .dots {
+        display: flex;
+        gap: 7px;
+      }
+
+      .dots span {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--red);
+      }
+
+      .dots span:nth-child(2) {
+        background: #f4cc5f;
+      }
+
+      .dots span:nth-child(3) {
+        background: var(--green);
+      }
+
+      .preview-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 300px;
+        gap: 1px;
+        align-items: start;
+        background: var(--white);
+      }
+
+      .canvas-wrap {
+        padding: 18px;
+        background: #080807;
+        border-right: 1px solid var(--line);
+      }
+
+      canvas {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        display: block;
+        border-radius: 10px;
+        background: #080807;
+      }
+
+      .side {
+        padding: 18px;
+        background: var(--white);
+      }
+
+      .side h2 {
+        margin-bottom: 6px;
+        font-size: 26px;
+        font-family: var(--serif);
+        letter-spacing: 0;
+      }
+
+      .side p {
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .story-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .scene-card {
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbf6eb;
+      }
+
+      .scene-card span {
+        color: var(--red);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .scene-card strong {
+        display: block;
+        margin: 5px 0 7px;
+      }
+
+      .scene-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .script-box {
+        margin-top: 18px;
+        padding: 16px;
+        border-radius: 10px;
+        color: rgba(255, 255, 255, 0.78);
+        background: #080808;
+        line-height: 1.62;
+        font-size: 14px;
+      }
+
+      .script-box strong {
+        color: white;
+      }
+
+      @media (max-width: 980px) {
+        h1 {
+          font-size: 52px;
+        }
+
+        .hero,
+        .app-grid,
+        .preview-body {
+          grid-template-columns: 1fr;
+        }
+
+        .hero p {
+          grid-column: auto;
+          margin-left: 0;
+        }
+
+        h1 {
+          grid-column: auto;
+        }
+      }
+
+      @media (max-width: 620px) {
+        .container {
+          width: auto;
+          max-width: none;
+          margin-left: 16px;
+          margin-right: 16px;
+        }
+
+        .nav-inner {
+          min-height: 64px;
+        }
+
+        .nav .button span:first-child {
+          display: none;
+        }
+
+        .nav .button {
+          width: 42px;
+          min-width: 42px;
+          padding: 0;
+        }
+
+        .hero {
+          padding: 28px 0 16px;
+        }
+
+        h1 {
+          font-size: 28px;
+          line-height: 1.08;
+          max-width: 100%;
+          overflow-wrap: normal;
+        }
+
+        .hero p {
+          font-size: 16px;
+          max-width: 100%;
+        }
+
+        .row {
+          grid-template-columns: 1fr;
+        }
+
+        .preview-top {
+          align-items: flex-start;
+          flex-direction: column;
+          padding: 16px;
+        }
+
+        .button {
+          width: 100%;
+        }
+
+        .actions .button {
+          width: auto;
+          flex: 1 1 180px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="nav">
+      <nav class="container nav-inner" aria-label="Primary navigation">
+        <a class="brand" href="/">
+          <span class="brand-mark">C</span>
+          <span>ClipCue</span>
+        </a>
+        <button class="button" id="navGenerate">
+          <span>Generate</span>
+          <span class="arrow" aria-hidden="true"></span>
+        </button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero container">
+        <div class="eyebrow">editorial video engine</div>
+        <h1>Paste a startup URL.<br />Generate a launch film.</h1>
+        <p>
+          A composed SaaS explainer system: product scan, launch angle, motion storyboard,
+          captions, and a browser-recorded video cut from one URL.
+        </p>
+      </section>
+
+      <section class="app container">
+        <div class="app-grid">
+          <aside class="panel form-panel">
+            <form class="form-grid" id="generateForm">
+              <div class="field">
+                <label for="startupUrl">Startup URL</label>
+                <input id="startupUrl" name="url" type="url" value="https://backdoorai.app/" required />
+              </div>
+              <div class="field">
+                <label for="productName">Product name, optional</label>
+                <input id="productName" name="productName" placeholder="Leave blank to detect from URL" />
+              </div>
+              <div class="field">
+                <label for="description">Extra context, optional</label>
+                <textarea id="description" name="description" placeholder="What does the product do? Who is it for?"></textarea>
+              </div>
+              <div class="row">
+                <div class="field">
+                  <label for="duration">Length</label>
+                  <select id="duration" name="duration">
+                    <option value="15">15 seconds</option>
+                    <option value="30" selected>30 seconds</option>
+                    <option value="45">45 seconds</option>
+                    <option value="60">60 seconds</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="tone">Style</label>
+                  <select id="tone" name="tone">
+                    <option value="Premium editorial launch film" selected>Premium film</option>
+                    <option value="Backdoor-style conversational">Conversational</option>
+                    <option value="Product Hunt punchy">Product Hunt punchy</option>
+                    <option value="Investor demo">Investor demo</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label for="templateId">Template engine</label>
+                <select id="templateId" name="templateId">
+                  <option value="auto">Auto-pick from hundreds of templates</option>
+                </select>
+                <p class="template-note" id="templateNote">Loading template catalog...</p>
+              </div>
+              <button class="button" type="submit" id="submitButton">
+                Generate launch video
+                <span class="arrow" aria-hidden="true"></span>
+              </button>
+              <div class="status" id="status">Ready. Paste a URL and generate the first cut.</div>
+            </form>
+          </aside>
+
+          <section class="panel preview-panel">
+            <div class="preview-top">
+              <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
+              <strong id="previewTitle">ClipCue launch preview</strong>
+              <div class="actions">
+                <button class="button secondary" id="playButton" type="button">Play preview</button>
+                <button class="button blue" id="recordButton" type="button">Record video</button>
+              </div>
+            </div>
+            <div class="preview-body">
+              <div class="canvas-wrap">
+                <canvas id="videoCanvas" width="1280" height="720" aria-label="Generated video preview"></canvas>
+              </div>
+              <aside class="side">
+                <h2 id="sideProduct">No video yet</h2>
+                <p id="sidePromise">Generate a launch video brief from a startup URL.</p>
+                <div class="actions">
+                  <button class="button secondary" id="downloadJson" type="button">Download JSON</button>
+                  <button class="button secondary" id="copyScript" type="button">Copy script</button>
+                </div>
+                <div class="story-list" id="storyList"></div>
+                <div class="script-box" id="scriptBox">
+                  <strong>Voiceover script</strong><br />
+                  Waiting for generated script.
+                </div>
+              </aside>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById("generateForm");
+      const statusEl = document.getElementById("status");
+      const submitButton = document.getElementById("submitButton");
+      const canvas = document.getElementById("videoCanvas");
+      const ctx = canvas.getContext("2d");
+      const playButton = document.getElementById("playButton");
+      const recordButton = document.getElementById("recordButton");
+      const downloadJson = document.getElementById("downloadJson");
+      const copyScript = document.getElementById("copyScript");
+      const storyList = document.getElementById("storyList");
+      const scriptBox = document.getElementById("scriptBox");
+      const sideProduct = document.getElementById("sideProduct");
+      const sidePromise = document.getElementById("sidePromise");
+      const previewTitle = document.getElementById("previewTitle");
+      const navGenerate = document.getElementById("navGenerate");
+      const templateSelect = document.getElementById("templateId");
+      const templateNote = document.getElementById("templateNote");
+
+      let project = null;
+      let playing = false;
+      let raf = 0;
+      let playStartedAt = 0;
+      let templateCatalog = [];
+
+      function setStatus(message) {
+        statusEl.textContent = message;
+      }
+
+      async function loadTemplates() {
+        try {
+          const response = await fetch("/api/templates");
+          const catalog = await response.json();
+          templateCatalog = catalog.templates || [];
+          const groups = new Map();
+          templateCatalog.forEach((template) => {
+            if (!groups.has(template.familyLabel)) groups.set(template.familyLabel, []);
+            groups.get(template.familyLabel).push(template);
+          });
+          templateSelect.innerHTML = `<option value="auto">Auto-pick from ${catalog.total || templateCatalog.length} templates</option>`;
+          groups.forEach((templates, label) => {
+            const group = document.createElement("optgroup");
+            group.label = label;
+            templates.forEach((template) => {
+              const option = document.createElement("option");
+              option.value = template.id;
+              option.textContent = template.name;
+              group.appendChild(option);
+            });
+            templateSelect.appendChild(group);
+          });
+          templateNote.textContent = `${catalog.total || templateCatalog.length} templates loaded: editorial, glass, kinetic, luxury, terminal, social, neon, and product UI systems.`;
+        } catch (error) {
+          templateNote.textContent = "Template catalog unavailable. Auto mode will still generate a premium cut.";
+        }
+      }
+
+      function wrapText(context, text, x, y, maxWidth, lineHeight, maxLines) {
+        const words = String(text || "").split(/\s+/);
+        let line = "";
+        let lines = 0;
+        for (let i = 0; i < words.length; i += 1) {
+          const testLine = line ? `${line} ${words[i]}` : words[i];
+          if (context.measureText(testLine).width > maxWidth && line) {
+            context.fillText(line, x, y);
+            y += lineHeight;
+            lines += 1;
+            line = words[i];
+            if (maxLines && lines >= maxLines - 1) break;
+          } else {
+            line = testLine;
+          }
+        }
+        if (line) context.fillText(line, x, y);
+      }
+
+      function roundedRect(context, x, y, w, h, r) {
+        const radius = Math.min(r, w / 2, h / 2);
+        context.beginPath();
+        context.moveTo(x + radius, y);
+        context.arcTo(x + w, y, x + w, y + h, radius);
+        context.arcTo(x + w, y + h, x, y + h, radius);
+        context.arcTo(x, y + h, x, y, radius);
+        context.arcTo(x, y, x + w, y, radius);
+        context.closePath();
+      }
+
+      function clamp(value, min = 0, max = 1) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function lerp(from, to, amount) {
+        return from + (to - from) * amount;
+      }
+
+      function easeOutCubic(value) {
+        const t = clamp(value);
+        return 1 - Math.pow(1 - t, 3);
+      }
+
+      function easeInOutCubic(value) {
+        const t = clamp(value);
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      function easeOutBack(value) {
+        const t = clamp(value);
+        const c1 = 1.70158;
+        const c3 = c1 + 1;
+        return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+      }
+
+      function totalDuration() {
+        if (!project) return 12;
+        return project.video.scenes.reduce((sum, scene) => sum + scene.duration, 0);
+      }
+
+      function getTimeline(time) {
+        if (!project) return null;
+        const scenes = project.video.scenes;
+        const total = totalDuration();
+        let local = ((time % total) + total) % total;
+        let start = 0;
+        for (let index = 0; index < scenes.length; index += 1) {
+          const scene = scenes[index];
+          if (local <= scene.duration) {
+            return {
+              scene,
+              index,
+              local,
+              start,
+              duration: scene.duration,
+              progress: clamp(local / scene.duration),
+              totalProgress: clamp((start + local) / total),
+              total
+            };
+          }
+          local -= scene.duration;
+          start += scene.duration;
+        }
+        const scene = scenes[scenes.length - 1];
+        return { scene, index: scenes.length - 1, local: scene.duration, start, duration: scene.duration, progress: 1, totalProgress: 1, total };
+      }
+
+      function fillRounded(x, y, w, h, r, fill) {
+        if (w <= 0 || h <= 0) return;
+        ctx.fillStyle = fill;
+        roundedRect(ctx, x, y, w, h, r);
+        ctx.fill();
+      }
+
+      function strokeRounded(x, y, w, h, r, stroke, width = 1) {
+        if (w <= 0 || h <= 0) return;
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = width;
+        roundedRect(ctx, x, y, w, h, r);
+        ctx.stroke();
+      }
+
+      const DEFAULT_TEMPLATE = {
+        id: "editorial-01",
+        name: "Forbes Editorial Signature",
+        family: "editorial",
+        familyLabel: "Forbes Editorial",
+        treatment: "editorial",
+        motion: "masthead-cut",
+        speed: "cinematic",
+        density: "spacious",
+        corner: 10,
+        fonts: { display: "Newsreader", sans: "Inter" },
+        palette: {
+          ink: "#080807",
+          paper: "#f8f2e4",
+          accent: "#b30c17",
+          secondary: "#0d6f88",
+          success: "#2f8f68",
+          gold: "#b58b3a"
+        }
+      };
+
+      let film = createFilmTheme(DEFAULT_TEMPLATE);
+
+      function currentTemplate() {
+        return project?.template || DEFAULT_TEMPLATE;
+      }
+
+      function fontStack(name, fallback) {
+        return `"${name || fallback}", ${fallback}`;
+      }
+
+      function displayFont(weight, size) {
+        return `${weight} ${size}px ${fontStack(currentTemplate().fonts?.display, "Georgia, serif")}`;
+      }
+
+      function sansFont(weight, size) {
+        return `${weight} ${size}px ${fontStack(currentTemplate().fonts?.sans, "Inter, sans-serif")}`;
+      }
+
+      function createFilmTheme(template) {
+        const palette = template?.palette || DEFAULT_TEMPLATE.palette;
+        const treatment = template?.treatment || "editorial";
+        const dark = treatment === "glass" || treatment === "kinetic" || treatment === "terminal";
+        return {
+          ink: dark ? palette.ink : palette.ink,
+          stageText: dark ? palette.ink : palette.ink,
+          panelText: dark ? palette.ink : palette.ink,
+          paper: dark ? palette.paper : palette.paper,
+          paper2: dark ? "#111318" : "#efe3cf",
+          white: dark ? "#fffaf0" : "#fffaf0",
+          red: palette.accent,
+          blue: palette.secondary,
+          green: palette.success,
+          gold: palette.gold,
+          buttonText: "#080807",
+          muted: dark ? "rgba(255,250,240,0.64)" : "rgba(8,8,7,0.58)",
+          glass: dark ? "rgba(255,250,240,0.10)" : "rgba(255,250,240,0.68)",
+          surface: dark ? "rgba(255,250,240,0.10)" : "rgba(255,250,240,0.72)",
+          softSurface: dark ? "rgba(255,250,240,0.07)" : "rgba(8,8,7,0.06)",
+          darkGlass: dark ? "rgba(255,250,240,0.10)" : "rgba(8,8,7,0.78)",
+          line: dark ? "rgba(255,250,240,0.18)" : "rgba(8,8,7,0.16)",
+          whiteLine: "rgba(255,250,240,0.22)",
+          dark
+        };
+      }
+
+      function scenePhase(progress) {
+        return {
+          in: easeOutCubic(progress / 0.22),
+          hold: clamp((progress - 0.18) / 0.62),
+          out: clamp((progress - 0.82) / 0.18)
+        };
+      }
+
+      function fitText(text, maxLength = 70) {
+        const clean = String(text || "").replace(/\s+/g, " ").trim();
+        if (clean.length <= maxLength) return clean;
+        return `${clean.slice(0, maxLength - 3).trim()}...`;
+      }
+
+      function makeLines(text, maxWidth, maxLines, font) {
+        const words = String(text || "").replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+        const lines = [];
+        let line = "";
+        let consumed = 0;
+        ctx.font = font;
+        for (let i = 0; i < words.length; i += 1) {
+          const word = words[i];
+          const test = line ? `${line} ${word}` : word;
+          if (ctx.measureText(test).width > maxWidth && line) {
+            lines.push(line);
+            line = word;
+            consumed = i;
+            if (lines.length === maxLines) break;
+          } else {
+            line = test;
+            consumed = i + 1;
+          }
+        }
+        if (line && lines.length < maxLines) lines.push(line);
+        if (consumed < words.length && lines.length === maxLines) {
+          const last = lines[lines.length - 1];
+          let trimmed = last;
+          while (ctx.measureText(`${trimmed}...`).width > maxWidth && trimmed.includes(" ")) {
+            trimmed = trimmed.slice(0, trimmed.lastIndexOf(" "));
+          }
+          lines[lines.length - 1] = `${trimmed}...`;
+        }
+        return lines;
+      }
+
+      function drawPaperBackground(time, mood = "blue") {
+        const template = currentTemplate();
+        const w = canvas.width;
+        const h = canvas.height;
+        const bg = ctx.createLinearGradient(0, 0, w, h);
+        if (template.treatment === "glass") {
+          bg.addColorStop(0, film.paper);
+          bg.addColorStop(0.5, "#111827");
+          bg.addColorStop(1, mood === "red" ? "#251014" : "#08202a");
+        } else if (template.treatment === "kinetic" || template.treatment === "terminal") {
+          bg.addColorStop(0, film.paper);
+          bg.addColorStop(0.55, "#0a0a0d");
+          bg.addColorStop(1, mood === "red" ? "#21080c" : "#071b20");
+        } else {
+          bg.addColorStop(0, film.paper);
+          bg.addColorStop(0.6, "#f5ead8");
+          bg.addColorStop(1, mood === "red" ? "#ead7d0" : "#dbe8e8");
+        }
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.save();
+        ctx.globalAlpha = film.dark ? 0.16 : 0.11;
+        ctx.strokeStyle = film.stageText;
+        ctx.lineWidth = 1;
+        for (let x = 68; x < w; x += 178) {
+          ctx.beginPath();
+          ctx.moveTo(x + Math.sin(time * 0.16 + x) * 2, 118);
+          ctx.lineTo(x, 590);
+          ctx.stroke();
+        }
+        for (let y = 156; y < 590; y += 118) {
+          ctx.beginPath();
+          ctx.moveTo(56, y);
+          ctx.lineTo(1226, y + Math.sin(time * 0.12 + y) * 2);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = film.dark ? 0.10 : 0.05;
+        for (let i = 0; i < 54; i += 1) {
+          const x = (i * 137 + Math.sin(time * 0.2 + i) * 8) % w;
+          const y = (i * 83 + Math.cos(time * 0.2 + i) * 8) % h;
+          ctx.fillStyle = i % 2 ? film.red : film.stageText;
+          ctx.fillRect(x, y, 2, 2);
+        }
+        ctx.restore();
+
+        if (template.treatment === "glass" || template.treatment === "kinetic") {
+          ctx.save();
+          ctx.globalAlpha = template.treatment === "kinetic" ? 0.18 : 0.12;
+          ctx.fillStyle = film.red;
+          ctx.beginPath();
+          ctx.arc(190 + Math.sin(time * 0.4) * 30, 170, 220, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = film.blue;
+          ctx.beginPath();
+          ctx.arc(1060 + Math.cos(time * 0.35) * 26, 540, 280, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      function drawMasthead(product, scene, totalProgress) {
+        const name = fitText(product.name || "ClipCue", 24);
+        ctx.save();
+        ctx.fillStyle = film.stageText;
+        ctx.font = displayFont(800, 34);
+        ctx.fillText(name, 64, 68);
+        ctx.font = sansFont(800, 11);
+        ctx.fillStyle = film.muted;
+        ctx.fillText("LAUNCH FILM", 66, 93);
+        ctx.fillStyle = film.red;
+        ctx.fillRect(64, 108, 142, 3);
+        ctx.fillStyle = film.muted;
+        ctx.font = sansFont(700, 13);
+        ctx.fillText(`${fitText(scene.title || "Scene", 30)} / ${scene.duration || 0}s`, 235, 94);
+        ctx.fillStyle = film.line;
+        ctx.fillRect(810, 78, 300, 8);
+        ctx.fillStyle = film.stageText;
+        ctx.fillRect(810, 78, 300 * totalProgress, 8);
+        ctx.fillStyle = film.muted;
+        ctx.font = sansFont(800, 11);
+        ctx.fillText("STORY RENDER", 810, 62);
+        ctx.restore();
+      }
+
+      function drawSerifHeadline(text, x, y, maxWidth, progress, options = {}) {
+        const size = options.size || 58;
+        const maxLines = options.maxLines || 3;
+        const color = options.color || film.stageText;
+        const font = displayFont(800, size);
+        const lines = makeLines(text, maxWidth, maxLines, font);
+        const template = currentTemplate();
+        ctx.save();
+        ctx.textBaseline = "alphabetic";
+        if (template.treatment === "kinetic" || template.motion === "word-stretch") {
+          let wordIndex = 0;
+          lines.forEach((line, lineIndex) => {
+            let cursor = x;
+            line.split(" ").forEach((word) => {
+              const p = easeOutCubic((progress - wordIndex * 0.045) / 0.36);
+              const alpha = clamp((progress - wordIndex * 0.04) / 0.22);
+              ctx.save();
+              ctx.globalAlpha = alpha;
+              ctx.translate(cursor + (1 - p) * -42, y + lineIndex * (size * 0.98));
+              ctx.scale(lerp(1.22, 1, p), 1);
+              ctx.fillStyle = wordIndex % 5 === 1 ? film.red : color;
+              ctx.font = font;
+              ctx.fillText(word, 0, 0);
+              ctx.restore();
+              cursor += ctx.measureText(word + " ").width;
+              wordIndex += 1;
+            });
+          });
+          ctx.globalAlpha = clamp(progress);
+          fillRounded(x, y + lines.length * (size * 0.98) + 18, Math.min(maxWidth, 220 + 260 * easeOutCubic(progress)), 6, 999, film.red);
+          ctx.restore();
+          return;
+        }
+        lines.forEach((line, index) => {
+          const lineP = easeOutCubic((progress - index * 0.08) / 0.52);
+          ctx.globalAlpha = clamp((progress - index * 0.06) / 0.32);
+          ctx.fillStyle = color;
+          ctx.font = font;
+          ctx.fillText(line, x, y + index * (size * 0.98) + (1 - lineP) * 34);
+        });
+        ctx.restore();
+      }
+
+      function drawKicker(text, x, y, color = film.red) {
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y - 10, 34, 2);
+        ctx.font = sansFont(900, 12);
+        ctx.fillText(String(text || "").toUpperCase(), x + 46, y - 5);
+        ctx.restore();
+      }
+
+      function drawSupportText(text, x, y, width, lines = 3, color = film.muted) {
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.font = sansFont(600, 21);
+        wrapText(ctx, fitText(text, 150), x, y, width, 30, lines);
+        ctx.restore();
+      }
+
+      function drawCursor(x, y, scale = 1, alpha = 1) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.fillStyle = film.white;
+        ctx.strokeStyle = "rgba(8,8,7,0.36)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, 34);
+        ctx.lineTo(10, 26);
+        ctx.lineTo(18, 44);
+        ctx.lineTo(26, 40);
+        ctx.lineTo(18, 22);
+        ctx.lineTo(31, 22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawPremiumBrowser(x, y, w, h, title, progress, accent = film.blue) {
+        const p = easeOutCubic(progress);
+        ctx.save();
+        ctx.translate(x + (1 - p) * 32, y + (1 - p) * 18);
+        ctx.globalAlpha = clamp(progress / 0.32);
+        fillRounded(0, 0, w, h, 14, film.surface);
+        strokeRounded(0, 0, w, h, 14, film.line, 1.5);
+        fillRounded(0, 0, w, 46, 14, film.dark ? "rgba(255,250,240,0.10)" : "rgba(8,8,7,0.88)");
+        fillRounded(18, 16, 10, 10, 999, "#d75b5b");
+        fillRounded(36, 16, 10, 10, 999, "#d6a94b");
+        fillRounded(54, 16, 10, 10, 999, "#4f9d71");
+        fillRounded(88, 12, w - 118, 22, 999, film.dark ? "rgba(255,250,240,0.10)" : "rgba(255,250,240,0.12)");
+        ctx.fillStyle = film.dark ? film.muted : "rgba(255,250,240,0.72)";
+        ctx.font = sansFont(800, 12);
+        ctx.fillText(fitText(title, 34), 104, 28);
+
+        fillRounded(28, 76, w - 56, 82, 10, film.softSurface);
+        ctx.fillStyle = film.ink;
+        ctx.font = displayFont(800, 24);
+        ctx.fillText(fitText(title, 26), 50, 111);
+        fillRounded(50, 128, (w - 150) * p, 8, 999, accent);
+        fillRounded(50, 144, (w - 210) * p, 6, 999, "rgba(8,8,7,0.24)");
+
+        const cardW = (w - 80) / 3;
+        for (let i = 0; i < 3; i += 1) {
+          const cp = easeOutCubic((progress - 0.18 - i * 0.08) / 0.38);
+          const cardX = 28 + i * (cardW + 12);
+          const cardY = 190 + (1 - cp) * 18;
+          fillRounded(cardX, cardY, cardW, 104, 10, i === 1 ? "rgba(179,12,23,0.16)" : film.softSurface);
+          fillRounded(cardX + 18, cardY + 24, Math.max(0, cardW - 48) * cp, 8, 999, i === 1 ? film.red : film.muted);
+          fillRounded(cardX + 18, cardY + 46, Math.max(0, cardW - 68) * cp, 6, 999, film.line);
+          fillRounded(cardX + 18, cardY + 68, Math.max(0, cardW - 88) * cp, 6, 999, film.line);
+        }
+
+        fillRounded(28, h - 108, w - 56, 72, 10, "rgba(8,8,7,0.84)");
+        fillRounded(52, h - 78, (w - 146) * p, 8, 999, film.white);
+        fillRounded(52, h - 55, (w - 198) * p, 6, 999, "rgba(255,250,240,0.34)");
+        ctx.restore();
+      }
+
+      function drawBriefCard(x, y, w, h, label, value, progress, accent = film.red) {
+        const p = easeOutCubic(progress);
+        ctx.save();
+        ctx.globalAlpha = clamp(progress / 0.3);
+        ctx.translate(x, y + (1 - p) * 24);
+        fillRounded(0, 0, w, h, 10, film.surface);
+        strokeRounded(0, 0, w, h, 10, film.line);
+        ctx.fillStyle = accent;
+        ctx.font = sansFont(900, 12);
+        ctx.fillText(label.toUpperCase(), 22, 31);
+        ctx.fillStyle = film.ink;
+        ctx.font = displayFont(800, 23);
+        wrapText(ctx, fitText(value, 64), 22, 64, w - 44, 28, 2);
+        ctx.restore();
+      }
+
+      function renderHook(state, product) {
+        const phase = scenePhase(state.progress);
+        drawKicker("cold open", 72, 148);
+        drawSerifHeadline(state.scene.caption, 72, 230, 620, phase.in, { size: 58, maxLines: 3 });
+        drawSupportText("The product is ready. The launch asset still feels unfinished.", 74, 425, 510, 3);
+
+        const panelX = 768 + (1 - phase.in) * 64;
+        fillRounded(panelX, 146, 338, 370, 12, film.darkGlass);
+        strokeRounded(panelX, 146, 338, 370, 12, "rgba(255,250,240,0.22)");
+        ctx.fillStyle = film.white;
+        ctx.font = displayFont(800, 26);
+        ctx.fillText("Launch Checklist", panelX + 30, 196);
+        const items = [
+          ["Product page", true],
+          ["Pricing story", true],
+          ["Founder copy", true],
+          ["Launch video", false]
+        ];
+        items.forEach((item, index) => {
+          const itemP = easeOutCubic((state.progress - 0.18 - index * 0.08) / 0.36);
+          const y = 238 + index * 58;
+          fillRounded(panelX + 30, y, 278, 38, 8, item[1] ? "rgba(255,250,240,0.08)" : "rgba(179,12,23,0.26)");
+          ctx.fillStyle = item[1] ? "rgba(255,250,240,0.68)" : "#ffcbc2";
+          ctx.font = sansFont(800, 15);
+          ctx.fillText((item[1] ? "Ready: " : "Missing: ") + item[0], panelX + 50, y + 25);
+          fillRounded(panelX + 260, y + 14, 18 * itemP, 10, 999, item[1] ? film.green : film.red);
+        });
+        drawCursor(panelX + 238, 464, 0.92, phase.hold);
+      }
+
+      function renderProblem(state) {
+        const phase = scenePhase(state.progress);
+        drawKicker("attention test", 72, 146, film.blue);
+        drawSerifHeadline("Generic demos get skipped.", 72, 226, 560, phase.in, { size: 64, maxLines: 2 });
+        drawSupportText(state.scene.visual, 74, 386, 540, 3);
+
+        const railX = 760;
+        fillRounded(railX, 124, 350, 452, 12, "rgba(8,8,7,0.86)");
+        strokeRounded(railX, 124, 350, 452, 12, "rgba(255,250,240,0.22)");
+        ctx.save();
+        roundedRect(ctx, railX + 18, 144, 314, 410, 10);
+        ctx.clip();
+        const scroll = easeInOutCubic(state.progress) * 96;
+        for (let i = 0; i < 6; i += 1) {
+          const y = 160 + i * 78 - scroll;
+          const selected = i === 3;
+          fillRounded(railX + 30, y, 290, 58, 8, selected ? "rgba(255,250,240,0.94)" : "rgba(255,250,240,0.09)");
+          ctx.fillStyle = selected ? film.buttonText : "rgba(255,250,240,0.62)";
+          ctx.font = sansFont(800, 15);
+          ctx.fillText(selected ? "Clear product story" : "Raw screen recording", railX + 50, y + 26);
+          fillRounded(railX + 50, y + 38, selected ? 166 : 118, 6, 999, selected ? film.red : "rgba(255,250,240,0.24)");
+        }
+        ctx.restore();
+        ctx.save();
+        ctx.globalAlpha = 0.72;
+        strokeRounded(railX + 28, 392, 292, 66, 10, film.red, 3);
+        ctx.restore();
+      }
+
+      function renderReveal(state, product) {
+        const phase = scenePhase(state.progress);
+        drawKicker("url to story", 72, 142);
+        drawSerifHeadline(`${fitText(product.name, 22)} becomes a launch cut.`, 72, 218, 650, phase.in, { size: 58, maxLines: 2 });
+
+        const inputP = easeOutCubic((state.progress - 0.1) / 0.4);
+        fillRounded(100, 318, 690, 70, 10, film.surface);
+        strokeRounded(100, 318, 690, 70, 10, film.line);
+        ctx.fillStyle = film.muted;
+        ctx.font = sansFont(800, 18);
+        ctx.fillText(fitText(product.url || "https://startup.com", 58), 128, 361);
+        fillRounded(648, 334, 126, 38, 999, film.red);
+        ctx.fillStyle = film.white;
+        ctx.font = sansFont(900, 13);
+        ctx.fillText("SCAN", 690, 358);
+        fillRounded(128, 402, 520 * inputP, 3, 999, film.red);
+
+        const cards = [
+          ["Audience", product.audience],
+          ["Promise", product.corePromise],
+          ["Scenes", "hook, proof, workflow"],
+          ["Voice", "captioned explainer"]
+        ];
+        cards.forEach((card, index) => {
+          const cp = (state.progress - 0.26 - index * 0.07) / 0.42;
+          drawBriefCard(118 + index * 202, 452, 182, 104, card[0], card[1], cp, index === 1 ? film.blue : film.red);
+        });
+        drawPremiumBrowser(878, 156, 286, 404, product.name, state.progress, film.blue);
+      }
+
+      function renderProof(state, product) {
+        const phase = scenePhase(state.progress);
+        drawPremiumBrowser(86, 150, 724, 420, `${product.name} dashboard`, state.progress, film.green);
+        const cardX = 846;
+        fillRounded(cardX, 164, 286, 282, 12, film.surface);
+        strokeRounded(cardX, 164, 286, 282, 12, film.line);
+        drawKicker("proof point", cardX + 28, 218, film.green);
+        drawSerifHeadline(fitText(state.scene.caption, 90), cardX + 28, 282, 226, phase.in, { size: 34, maxLines: 3 });
+        drawSupportText(product.corePromise, cardX + 30, 408, 230, 3);
+        const cursorT = easeInOutCubic((state.progress - 0.26) / 0.56);
+        drawCursor(lerp(326, 642, cursorT), lerp(500, 332, cursorT), 0.86, phase.hold);
+        ctx.save();
+        ctx.globalAlpha = 0.45 + Math.sin(state.local * 8) * 0.08;
+        strokeRounded(536, 310, 206, 72, 8, film.green, 3);
+        ctx.restore();
+      }
+
+      function renderWorkflow(state) {
+        const phase = scenePhase(state.progress);
+        drawKicker("edit system", 72, 146, film.blue);
+        drawSerifHeadline("Script. Captions. Motion. One paced cut.", 72, 226, 660, phase.in, { size: 56, maxLines: 2 });
+
+        const steps = [
+          ["HOOK", "sharp open"],
+          ["UI", "product proof"],
+          ["VOICE", "clean narration"],
+          ["CUT", "export timeline"]
+        ];
+        steps.forEach((step, index) => {
+          const p = easeOutCubic((state.progress - 0.18 - index * 0.08) / 0.36);
+          const x = 770;
+          const y = 142 + index * 94;
+          fillRounded(x, y + (1 - p) * 20, 312, 68, 10, index === 1 ? "rgba(13,111,136,0.20)" : film.surface);
+          strokeRounded(x, y + (1 - p) * 20, 312, 68, 10, film.line);
+          ctx.fillStyle = index === 1 ? film.blue : film.red;
+          ctx.font = sansFont(900, 12);
+          ctx.fillText(step[0], x + 24, y + 25 + (1 - p) * 20);
+          ctx.fillStyle = film.ink;
+          ctx.font = displayFont(800, 24);
+          ctx.fillText(step[1], x + 24, y + 52 + (1 - p) * 20);
+        });
+
+        fillRounded(86, 454, 642, 84, 10, "rgba(8,8,7,0.86)");
+        for (let i = 0; i < 7; i += 1) {
+          const tp = easeOutCubic((state.progress - 0.28 - i * 0.05) / 0.34);
+          const width = [88, 126, 64, 140, 86, 102, 68][i] * tp;
+          fillRounded(112 + i * 84, 486, width, 18, 5, i % 3 === 0 ? film.red : i % 3 === 1 ? film.blue : film.green);
+        }
+        for (let i = 0; i < 32; i += 1) {
+          const wave = 8 + Math.abs(Math.sin(state.local * 3 + i * 0.52)) * 22;
+          fillRounded(114 + i * 14, 430 - wave, 7, wave, 999, i % 2 ? film.blue : film.gold);
+        }
+      }
+
+      function renderCTA(state, product) {
+        const phase = scenePhase(state.progress);
+        const scale = lerp(0.94, 1, phase.in);
+        ctx.save();
+        ctx.translate(640, 326);
+        ctx.scale(scale, scale);
+        ctx.translate(-640, -326);
+        fillRounded(310, 146, 660, 354, 14, "rgba(8,8,7,0.88)");
+        strokeRounded(310, 146, 660, 354, 14, "rgba(255,250,240,0.26)", 1.5);
+        ctx.fillStyle = film.red;
+        ctx.fillRect(366, 198, 92, 5);
+        ctx.fillStyle = film.white;
+        ctx.font = displayFont(800, 66);
+        ctx.fillText("Export ready.", 366, 274);
+        ctx.font = sansFont(700, 23);
+        ctx.fillStyle = "rgba(255,250,240,0.68)";
+        ctx.fillText(`${fitText(product.name, 28)} launch film`, 370, 318);
+        fillRounded(370, 360, 420, 12, 999, "rgba(255,250,240,0.15)");
+        fillRounded(370, 360, 420 * easeInOutCubic(state.progress), 12, 999, film.green);
+        fillRounded(370, 396, 210, 48, 999, film.white);
+        ctx.fillStyle = film.buttonText;
+        ctx.font = sansFont(900, 15);
+        ctx.fillText("RECORD VIDEO", 416, 426);
+        ctx.restore();
+
+        ["Landing page", "Product Hunt", "X/Twitter", "Reddit"].forEach((label, index) => {
+          const p = easeOutCubic((state.progress - 0.34 - index * 0.05) / 0.32);
+          fillRounded(174 + index * 230, 552 + (1 - p) * 22, 176, 38, 999, "rgba(8,8,7,0.76)");
+          ctx.fillStyle = "rgba(255,250,240," + (0.28 + p * 0.62) + ")";
+          ctx.font = sansFont(800, 13);
+          ctx.fillText(label, 216 + index * 230, 576 + (1 - p) * 22);
+        });
+      }
+
+      function drawCaptionBar(scene) {
+        const text = fitText(scene.voiceover || scene.caption, 118);
+        fillRounded(72, 608, 850, 56, 10, "rgba(8,8,7,0.88)");
+        ctx.fillStyle = "rgba(255,250,240,0.90)";
+        ctx.font = sansFont(800, 18);
+        wrapText(ctx, text, 96, 640, 802, 23, 2);
+      }
+
+      function drawTransition(progress) {
+        const inAlpha = clamp((0.08 - progress) / 0.08);
+        const outAlpha = clamp((progress - 0.92) / 0.08);
+        const alpha = Math.max(inAlpha, outAlpha);
+        if (alpha <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = film.dark ? "#050505" : film.ink;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+
+      function drawIdle(time = 0) {
+        film = createFilmTheme(DEFAULT_TEMPLATE);
+        drawPaperBackground(time, "red");
+        const product = { name: "ClipCue" };
+        const scene = { title: "Paste URL", duration: 45, voiceover: "Paste a startup URL and generate a composed launch-video cut." };
+        drawMasthead(product, scene, 0.06);
+        drawKicker("generator", 72, 150);
+        drawSerifHeadline("Paste a startup URL. Get a composed launch film.", 72, 230, 650, 1, { size: 58, maxLines: 3 });
+        drawSupportText("Built for SaaS launches: hook, proof, captions, workflow, and export timing.", 74, 470, 560, 2);
+        drawPremiumBrowser(820, 144, 330, 424, "startup.com", 0.88, film.red);
+        drawCaptionBar(scene);
+      }
+
+      function drawPreview(time = 0) {
+        film = createFilmTheme(project?.template || DEFAULT_TEMPLATE);
+        if (!project) {
+          drawIdle(time);
+          return;
+        }
+        const state = getTimeline(time);
+        const product = project.product;
+        const type = state.scene.type || "";
+        const mood = type === "hook" || type === "cta" ? "red" : type === "proof" || type === "workflow" ? "green" : "blue";
+        drawPaperBackground(time, mood);
+        drawMasthead(product, state.scene, state.totalProgress);
+        if (type === "hook") renderHook(state, product);
+        else if (type === "problem") renderProblem(state, product);
+        else if (type === "reveal") renderReveal(state, product);
+        else if (type === "proof") renderProof(state, product);
+        else if (type === "workflow") renderWorkflow(state, product);
+        else renderCTA(state, product);
+        drawCaptionBar(state.scene);
+        drawTransition(state.progress);
+      }
+
+      function templateMode() {
+        const family = currentTemplate().family || "editorial";
+        if (["glass", "product"].includes(family)) return "glass";
+        if (["kinetic", "social", "neon"].includes(family)) return "kinetic";
+        if (family === "terminal") return "terminal";
+        return "editorial";
+      }
+
+      function stageTextColor() {
+        return film.dark ? film.white : film.ink;
+      }
+
+      function quietTextColor() {
+        return film.dark ? "rgba(255,250,240,0.66)" : "rgba(8,8,7,0.58)";
+      }
+
+      function drawStage(time, mode, mood = "red") {
+        const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        if (mode === "glass") {
+          bg.addColorStop(0, "#05060a");
+          bg.addColorStop(0.55, "#0d1220");
+          bg.addColorStop(1, mood === "red" ? "#230b12" : "#061f26");
+        } else if (mode === "kinetic" || mode === "terminal") {
+          bg.addColorStop(0, "#050505");
+          bg.addColorStop(0.62, "#111111");
+          bg.addColorStop(1, mood === "red" ? "#25070b" : "#06171d");
+        } else {
+          bg.addColorStop(0, "#fbf4e6");
+          bg.addColorStop(0.68, "#f3ead8");
+          bg.addColorStop(1, mood === "red" ? "#ead5cc" : "#dce8e5");
+        }
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+        ctx.globalAlpha = mode === "editorial" ? 0.13 : 0.18;
+        ctx.strokeStyle = stageTextColor();
+        ctx.lineWidth = 1;
+        for (let x = 70; x < 1210; x += mode === "kinetic" ? 240 : 170) {
+          ctx.beginPath();
+          ctx.moveTo(x, 120);
+          ctx.lineTo(x, 580);
+          ctx.stroke();
+        }
+        for (let y = 160; y < 585; y += 110) {
+          ctx.beginPath();
+          ctx.moveTo(64, y);
+          ctx.lineTo(1216, y);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        if (mode !== "editorial") {
+          ctx.save();
+          ctx.globalAlpha = mode === "kinetic" ? 0.2 : 0.16;
+          ctx.fillStyle = film.red;
+          ctx.beginPath();
+          ctx.arc(205 + Math.sin(time * 0.45) * 34, 185, 215, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = film.blue;
+          ctx.beginPath();
+          ctx.arc(1030 + Math.cos(time * 0.35) * 32, 510, 280, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      function drawFilmHeader(product, state) {
+        const template = currentTemplate();
+        ctx.save();
+        ctx.fillStyle = stageTextColor();
+        ctx.font = displayFont(800, templateMode() === "kinetic" ? 28 : 32);
+        ctx.fillText(fitText(product.name || "ClipCue", 22), 70, 70);
+        ctx.fillStyle = film.red;
+        ctx.fillRect(70, 96, 96, 3);
+        ctx.fillStyle = quietTextColor();
+        ctx.font = sansFont(800, 12);
+        ctx.fillText((template.familyLabel || "Launch Film").toUpperCase(), 186, 100);
+        fillRounded(850, 72, 300, 8, 999, film.dark ? "rgba(255,250,240,0.16)" : "rgba(8,8,7,0.14)");
+        fillRounded(850, 72, 300 * (state?.totalProgress || 0.08), 8, 999, film.red);
+        ctx.restore();
+      }
+
+      function drawLargeHeadline(text, x, y, width, progress, size = 72, lines = 3, color = stageTextColor()) {
+        const mode = templateMode();
+        const font = displayFont(800, size);
+        const lineList = makeLines(text, width, lines, font);
+        ctx.save();
+        ctx.textBaseline = "alphabetic";
+        if (mode === "kinetic") {
+          let wordIndex = 0;
+          lineList.forEach((line, lineIndex) => {
+            let cursor = x;
+            line.split(" ").forEach((word) => {
+              const p = easeOutCubic((progress - wordIndex * 0.035) / 0.34);
+              const alpha = clamp((progress - wordIndex * 0.03) / 0.22);
+              const hot = /launch|video|demo|cut|story|screen|recording|skipped/i.test(word);
+              ctx.save();
+              ctx.globalAlpha = alpha;
+              ctx.translate(cursor + (1 - p) * -58, y + lineIndex * (size * 0.93));
+              ctx.scale(lerp(1.32, 1, p), 1);
+              ctx.fillStyle = hot ? film.red : color;
+              ctx.font = font;
+              ctx.fillText(word, 0, 0);
+              ctx.restore();
+              cursor += ctx.measureText(word + " ").width;
+              wordIndex += 1;
+            });
+          });
+          fillRounded(x, y + lineList.length * size + 12, Math.min(width, 180 + 360 * easeOutCubic(progress)), 6, 999, film.red);
+        } else {
+          lineList.forEach((line, index) => {
+            const p = easeOutCubic((progress - index * 0.07) / 0.45);
+            ctx.globalAlpha = clamp((progress - index * 0.05) / 0.24);
+            ctx.fillStyle = color;
+            ctx.font = font;
+            ctx.fillText(line, x, y + index * (size * 0.96) + (1 - p) * 28);
+          });
+        }
+        ctx.restore();
+      }
+
+      function drawSubcopy(text, x, y, width, progress, lines = 3) {
+        ctx.save();
+        ctx.globalAlpha = clamp((progress - 0.18) / 0.34);
+        ctx.fillStyle = quietTextColor();
+        ctx.font = sansFont(650, 21);
+        wrapText(ctx, fitText(text, 150), x, y, width, 30, lines);
+        ctx.restore();
+      }
+
+      function drawPremiumPanel(x, y, w, h, progress, accent = film.red) {
+        const p = easeOutCubic(progress);
+        ctx.save();
+        ctx.translate(x + (1 - p) * 28, y + (1 - p) * 18);
+        ctx.globalAlpha = clamp(progress / 0.25);
+        fillRounded(0, 0, w, h, currentTemplate().corner || 10, templateMode() === "editorial" ? "rgba(255,250,240,0.78)" : "rgba(255,250,240,0.11)");
+        strokeRounded(0, 0, w, h, currentTemplate().corner || 10, templateMode() === "editorial" ? "rgba(8,8,7,0.17)" : "rgba(255,250,240,0.22)", 1.4);
+        fillRounded(26, 28, 82, 5, 999, accent);
+        ctx.restore();
+      }
+
+      function drawBigBrowser(x, y, w, h, product, progress, accent = film.blue) {
+        drawPremiumPanel(x, y, w, h, progress, accent);
+        const p = easeOutCubic(progress);
+        ctx.save();
+        ctx.translate(x + (1 - p) * 28, y + (1 - p) * 18);
+        ctx.globalAlpha = clamp(progress / 0.25);
+        fillRounded(0, 0, w, 54, currentTemplate().corner || 10, templateMode() === "editorial" ? "rgba(8,8,7,0.88)" : "rgba(255,250,240,0.12)");
+        ["#e54b4f", "#d9a941", "#54b37b"].forEach((dot, i) => fillRounded(24 + i * 20, 22, 10, 10, 999, dot));
+        fillRounded(96, 17, w - 132, 20, 999, templateMode() === "editorial" ? "rgba(255,250,240,0.12)" : "rgba(255,250,240,0.14)");
+        ctx.fillStyle = templateMode() === "editorial" ? "rgba(255,250,240,0.72)" : film.white;
+        ctx.font = sansFont(800, 12);
+        ctx.fillText(fitText(product.name + " dashboard", 34), 112, 31);
+        fillRounded(38, 90, w - 76, 86, 10, film.dark ? "rgba(255,250,240,0.08)" : "rgba(8,8,7,0.05)");
+        ctx.fillStyle = stageTextColor();
+        if (templateMode() === "editorial") ctx.fillStyle = film.ink;
+        ctx.font = displayFont(800, 30);
+        ctx.fillText(fitText(product.name, 24), 62, 126);
+        fillRounded(62, 148, (w - 186) * p, 8, 999, accent);
+        fillRounded(62, 166, (w - 250) * p, 6, 999, templateMode() === "editorial" ? "rgba(8,8,7,0.22)" : "rgba(255,250,240,0.28)");
+        for (let i = 0; i < 3; i += 1) {
+          const cp = easeOutCubic((progress - 0.18 - i * 0.08) / 0.36);
+          const cardW = (w - 112) / 3;
+          const cardX = 38 + i * (cardW + 18);
+          fillRounded(cardX, 214, cardW, 112, 10, i === 1 ? "rgba(179,12,23,0.18)" : film.dark ? "rgba(255,250,240,0.075)" : "rgba(8,8,7,0.06)");
+          fillRounded(cardX + 24, 246, (cardW - 54) * cp, 8, 999, i === 1 ? film.red : accent);
+          fillRounded(cardX + 24, 272, (cardW - 82) * cp, 6, 999, film.dark ? "rgba(255,250,240,0.32)" : "rgba(8,8,7,0.24)");
+        }
+        ctx.restore();
+      }
+
+      function renderHookFrame(state, product) {
+        const p = scenePhase(state.progress).in;
+        drawLargeHeadline(state.scene.caption, 72, 205, 680, p, templateMode() === "kinetic" ? 68 : 64, 3);
+        drawSubcopy("The product is ready. The launch video still feels last minute.", 76, 430, 520, state.progress, 2);
+        drawPremiumPanel(820, 150, 330, 330, state.progress, film.red);
+        ctx.save();
+        ctx.globalAlpha = clamp((state.progress - 0.16) / 0.3);
+        ctx.fillStyle = templateMode() === "editorial" ? film.ink : film.white;
+        ctx.font = displayFont(800, 30);
+        ctx.fillText("Launch gap", 858, 215);
+        [["Product page", true], ["Founder copy", true], ["Launch video", false]].forEach((item, index) => {
+          const y = 258 + index * 58;
+          fillRounded(858, y, 246, 40, 8, item[1] ? "rgba(255,250,240,0.10)" : "rgba(179,12,23,0.32)");
+          ctx.fillStyle = item[1] ? quietTextColor() : "#ffb8b2";
+          ctx.font = sansFont(850, 15);
+          ctx.fillText((item[1] ? "Ready: " : "Missing: ") + item[0], 878, y + 26);
+        });
+        ctx.restore();
+      }
+
+      function renderProblemFrame(state) {
+        drawLargeHeadline("Generic demos get skipped.", 72, 222, 660, scenePhase(state.progress).in, 76, 2);
+        drawSubcopy("A launch video has to clarify the product before the viewer scrolls.", 76, 408, 540, state.progress, 2);
+        drawPremiumPanel(790, 142, 340, 380, state.progress, film.blue);
+        ctx.save();
+        ctx.globalAlpha = clamp((state.progress - 0.12) / 0.3);
+        for (let i = 0; i < 5; i += 1) {
+          const y = 182 + i * 62 - easeInOutCubic(state.progress) * 34;
+          const selected = i === 3;
+          fillRounded(826, y, 270, 44, 8, selected ? film.white : "rgba(255,250,240,0.10)");
+          ctx.fillStyle = selected ? "#080807" : "rgba(255,250,240,0.70)";
+          ctx.font = sansFont(850, 14);
+          ctx.fillText(selected ? "Clear product story" : "Raw screen recording", 844, y + 28);
+        }
+        ctx.restore();
+      }
+
+      function renderRevealFrame(state, product) {
+        drawLargeHeadline(`${fitText(product.name, 20)} becomes a launch story.`, 72, 205, 700, scenePhase(state.progress).in, 64, 2);
+        const p = easeOutCubic((state.progress - 0.1) / 0.42);
+        drawPremiumPanel(86, 330, 720, 86, state.progress, film.red);
+        ctx.fillStyle = quietTextColor();
+        ctx.font = sansFont(850, 20);
+        ctx.fillText(fitText(product.url || "https://startup.com", 56), 126, 382);
+        fillRounded(650, 348, 138, 44, 999, film.red);
+        ctx.fillStyle = film.white;
+        ctx.font = sansFont(900, 14);
+        ctx.fillText("SCAN URL", 680, 375);
+        fillRounded(126, 430, 520 * p, 4, 999, film.red);
+        [["Audience", product.audience], ["Proof", product.features?.[0] || product.category], ["Style", currentTemplate().familyLabel]].forEach((card, index) => {
+          drawPremiumPanel(846, 162 + index * 126, 300, 92, (state.progress - 0.18 - index * 0.08) / 0.34, index === 1 ? film.blue : film.red);
+          ctx.fillStyle = stageTextColor();
+          if (templateMode() === "editorial") ctx.fillStyle = film.ink;
+          ctx.font = displayFont(800, 22);
+          wrapText(ctx, fitText(card[1], 44), 878, 212 + index * 126, 240, 26, 2);
+          ctx.fillStyle = film.red;
+          ctx.font = sansFont(900, 11);
+          ctx.fillText(card[0].toUpperCase(), 878, 184 + index * 126);
+        });
+      }
+
+      function renderProofFrame(state, product) {
+        drawBigBrowser(74, 142, 720, 420, product, state.progress, film.green);
+        drawPremiumPanel(850, 164, 300, 300, state.progress, film.green);
+        ctx.fillStyle = templateMode() === "editorial" ? film.ink : film.white;
+        ctx.font = displayFont(800, 34);
+        wrapText(ctx, fitText(state.scene.caption, 78), 884, 230, 238, 37, 3);
+        ctx.fillStyle = quietTextColor();
+        ctx.font = sansFont(650, 17);
+        wrapText(ctx, fitText(product.corePromise, 110), 886, 358, 232, 23, 4);
+      }
+
+      function renderWorkflowFrame(state) {
+        drawLargeHeadline("Script. Captions. Motion. One cut.", 72, 205, 700, scenePhase(state.progress).in, 64, 2);
+        drawPremiumPanel(82, 438, 650, 96, state.progress, film.blue);
+        for (let i = 0; i < 8; i += 1) {
+          const p = easeOutCubic((state.progress - 0.18 - i * 0.035) / 0.3);
+          fillRounded(116 + i * 74, 476, [52, 86, 44, 110, 66, 92, 58, 72][i] * p, 22, 5, i % 3 === 0 ? film.red : i % 3 === 1 ? film.blue : film.green);
+        }
+        [["HOOK", "sharp open"], ["PROOF", "product UI"], ["VOICE", "clean narration"], ["CUT", "export timeline"]].forEach((step, index) => {
+          drawPremiumPanel(820, 142 + index * 92, 300, 66, (state.progress - 0.16 - index * 0.06) / 0.3, index === 1 ? film.blue : film.red);
+          ctx.fillStyle = film.red;
+          ctx.font = sansFont(900, 11);
+          ctx.fillText(step[0], 850, 170 + index * 92);
+          ctx.fillStyle = templateMode() === "editorial" ? film.ink : film.white;
+          ctx.font = displayFont(800, 24);
+          ctx.fillText(step[1], 850, 198 + index * 92);
+        });
+      }
+
+      function renderCtaFrame(state, product) {
+        drawLargeHeadline("Export ready.", 260, 244, 640, scenePhase(state.progress).in, 86, 1, templateMode() === "editorial" ? film.ink : film.white);
+        drawSubcopy(`${product.name} launch film, ready for landing pages and social drops.`, 306, 326, 560, state.progress, 2);
+        fillRounded(360, 406, 560, 12, 999, film.dark ? "rgba(255,250,240,0.16)" : "rgba(8,8,7,0.14)");
+        fillRounded(360, 406, 560 * easeInOutCubic(state.progress), 12, 999, film.green);
+        fillRounded(490, 454, 280, 56, 999, film.dark ? film.white : film.ink);
+        ctx.fillStyle = film.dark ? "#080807" : film.white;
+        ctx.font = sansFont(900, 18);
+        ctx.fillText("RECORD VIDEO", 552, 489);
+      }
+
+      function drawCleanCaption(scene) {
+        const text = fitText(scene.voiceover || scene.caption, 120);
+        fillRounded(72, 608, 850, 54, 8, "rgba(5,5,5,0.88)");
+        ctx.fillStyle = "rgba(255,250,240,0.92)";
+        ctx.font = sansFont(800, 18);
+        wrapText(ctx, text, 98, 640, 800, 23, 2);
+      }
+
+      function drawPreview(time = 0) {
+        film = createFilmTheme(project?.template || DEFAULT_TEMPLATE);
+        if (!project) {
+          drawStage(time, "editorial", "red");
+          const idleState = { totalProgress: 0.08 };
+          drawFilmHeader({ name: "ClipCue" }, idleState);
+          drawLargeHeadline("Paste a startup URL. Generate a launch film.", 72, 225, 720, 1, 68, 3);
+          drawSubcopy("Choose from hundreds of templates: editorial, glass, kinetic, luxury, terminal, neon, and product UI.", 76, 450, 650, 1, 2);
+          drawBigBrowser(820, 150, 330, 360, { name: "startup.com" }, 1, film.red);
+          drawCleanCaption({ voiceover: "Paste a startup URL and choose a premium template direction." });
+          return;
+        }
+        const state = getTimeline(time);
+        const product = project.product;
+        const mode = templateMode();
+        const type = state.scene.type || "";
+        const mood = type === "hook" || type === "cta" ? "red" : type === "proof" || type === "workflow" ? "green" : "blue";
+        drawStage(time, mode, mood);
+        drawFilmHeader(product, state);
+        if (type === "hook") renderHookFrame(state, product);
+        else if (type === "problem") renderProblemFrame(state, product);
+        else if (type === "reveal") renderRevealFrame(state, product);
+        else if (type === "proof") renderProofFrame(state, product);
+        else if (type === "workflow") renderWorkflowFrame(state, product);
+        else renderCtaFrame(state, product);
+        drawCleanCaption(state.scene);
+        drawTransition(state.progress);
+      }
+
+      function animate(now) {
+        if (!playing) return;
+        if (!playStartedAt) playStartedAt = now;
+        const time = (now - playStartedAt) / 1000;
+        drawPreview(time);
+        raf = requestAnimationFrame(animate);
+      }
+
+      function renderProject(data) {
+        project = data;
+        const product = data.product;
+        const template = data.template || DEFAULT_TEMPLATE;
+        previewTitle.textContent = data.video.title;
+        sideProduct.textContent = product.name;
+        sidePromise.textContent = `${product.corePromise} Template: ${template.name}.`;
+        templateNote.textContent = `${template.name}: ${template.vibe || `${template.fonts.display} with ${template.fonts.sans}`} / ${template.treatment} / ${template.motion}.`;
+        storyList.innerHTML = `
+          <article class="scene-card">
+            <span>template - ${template.familyLabel || template.family}</span>
+            <strong>${template.name}</strong>
+            <p>${template.recommendedFor || template.vibe || "Premium launch video direction."}</p>
+          </article>
+        ` + data.video.scenes
+          .map((scene) => {
+            return `
+              <article class="scene-card">
+                <span>${String(scene.sceneNumber).padStart(2, "0")} - ${scene.type} - ${scene.duration}s</span>
+                <strong>${scene.caption}</strong>
+                <p>${scene.motion}</p>
+              </article>
+            `;
+          })
+          .join("");
+        scriptBox.innerHTML = `<strong>Voiceover script</strong><br>${data.video.script}`;
+        drawPreview(0);
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        submitButton.disabled = true;
+        setStatus("Scanning the startup page and writing the launch cut...");
+        const payload = Object.fromEntries(new FormData(form));
+        try {
+          const response = await fetch("/api/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "Generation failed.");
+          renderProject(data);
+          setStatus(data.statusNote);
+        } catch (error) {
+          setStatus(error.message);
+        } finally {
+          submitButton.disabled = false;
+        }
+      });
+
+      playButton.addEventListener("click", () => {
+        playing = !playing;
+        playButton.textContent = playing ? "Pause preview" : "Play preview";
+        if (playing) {
+          playStartedAt = 0;
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(animate);
+        } else {
+          cancelAnimationFrame(raf);
+        }
+      });
+
+      recordButton.addEventListener("click", async () => {
+        if (!project) {
+          setStatus("Generate a video first.");
+          return;
+        }
+        if (!canvas.captureStream || !window.MediaRecorder) {
+          setStatus("This browser cannot record canvas video. Try current Edge or Chrome.");
+          return;
+        }
+        const options = [
+          "video/mp4;codecs=h264",
+          "video/webm;codecs=vp9",
+          "video/webm;codecs=vp8",
+          "video/webm"
+        ];
+        const mimeType = options.find((type) => MediaRecorder.isTypeSupported(type)) || "";
+        const stream = canvas.captureStream(30);
+        const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+        const chunks = [];
+        recorder.ondataavailable = (event) => {
+          if (event.data && event.data.size) chunks.push(event.data);
+        };
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: mimeType || "video/webm" });
+          const extension = blob.type.includes("mp4") ? "mp4" : "webm";
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `${project.product.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-clipcue.${extension}`;
+          link.click();
+          URL.revokeObjectURL(url);
+          setStatus(`Downloaded ${extension.toUpperCase()} video preview. Real production MP4 can plug into Remotion or Creatomate.`);
+        };
+
+        setStatus("Recording the animated preview...");
+        recordButton.disabled = true;
+        playing = true;
+        playStartedAt = performance.now();
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(animate);
+        recorder.start();
+        await new Promise((resolve) => setTimeout(resolve, Math.min(project.video.duration, 60) * 1000));
+        recorder.stop();
+        playing = false;
+        playButton.textContent = "Play preview";
+        recordButton.disabled = false;
+      });
+
+      downloadJson.addEventListener("click", () => {
+        if (!project) {
+          setStatus("Generate a video first.");
+          return;
+        }
+        const blob = new Blob([JSON.stringify(project, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${project.product.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-storyboard.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+
+      copyScript.addEventListener("click", async () => {
+        if (!project) {
+          setStatus("Generate a video first.");
+          return;
+        }
+        await navigator.clipboard.writeText(project.video.script);
+        setStatus("Voiceover script copied.");
+      });
+
+      templateSelect.addEventListener("change", () => {
+        const selected = templateCatalog.find((template) => template.id === templateSelect.value);
+        if (!selected) {
+          templateNote.textContent = `Auto mode chooses from ${templateCatalog.length || 240} templates based on URL, category, and style.`;
+          return;
+        }
+        templateNote.textContent = `${selected.name}: ${selected.vibe} / ${selected.treatment} / ${selected.motion}. Regenerate to apply it.`;
+      });
+
+      navGenerate.addEventListener("click", () => form.requestSubmit());
+      loadTemplates();
+      drawPreview(0);
+    </script>
+  </body>
+</html>
